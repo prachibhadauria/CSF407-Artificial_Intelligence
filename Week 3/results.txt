@@ -1,0 +1,240 @@
+Python 3.11.15
+========================================================================
+WAREHOUSE FROM THE HANDOUT
+========================================================================
+#################
+#S....#.........#
+#.###.#.#######.#
+#...#.#.......#.#
+###.#.#######.#.#
+#...#.........#.#
+#.###########.#.#
+#.............#G#
+#################
+
+s0 = (1, 1), goal = (7, 15), free cells (states) = 64
+
+========================================================================
+TASK 3: TESTING A* (Manhattan heuristic)
+========================================================================
+
+Test 1: original warehouse
+  A* on the lab map
+  solution found: yes | path length: 40 | states expanded: 63
+  path (row, col): (1,1) -> (1,2) -> (1,3) -> (1,4) -> (1,5) -> (2,5) -> (3,5) -> (4,5) -> (5,5) -> (5,6) -> (5,7) -> (5,8) -> (5,9) -> (5,10) -> (5,11) -> (5,12) -> (5,13) -> (4,13) -> (3,13) -> (3,12) -> (3,11) -> (3,10) -> (3,9) -> (3,8) -> (3,7) -> (2,7) -> (1,7) -> (1,8) -> (1,9) -> (1,10) -> (1,11) -> (1,12) -> (1,13) -> (1,14) -> (1,15) -> (2,15) -> (3,15) -> (4,15) -> (5,15) -> (6,15) -> (7,15)
+  actions: Right Right Right Right Down Down Down Down Right Right Right Right Right Right Right Right Up Up Left Left Left Left Left Left Up Up Right Right Right Right Right Right Right Right Down Down Down Down Down Down
+  #################
+  #S****#*********#
+  #.###*#*#######*#
+  #...#*#*******#*#
+  ###.#*#######*#*#
+  #...#*********#*#
+  #.###########.#*#
+  #.............#G#
+  #################
+  independent shortest distance S -> G (Bellman-Ford): 40
+  [PASS] a path is found
+  [PASS] replaying the path never hits a wall and ends at G
+  [PASS] path length equals the independent shortest distance
+  [PASS] path length >= Manhattan distance S-G
+
+Test 2: trivial case (goal adjacent to start)
+  A*
+  solution found: yes | path length: 1 | states expanded: 1
+  path (row, col): (1,1) -> (1,2)
+  actions: Right
+  #####
+  #SG##
+  #####
+  [PASS] one-step solution: ['Right']
+  [PASS] exactly 1 move and 1 state expanded
+
+Test 3: no solution (goal completely inaccessible)
+  A*
+  solution found: no | states expanded: 9
+  [PASS] reports failure (and terminates)
+  [PASS] BFS also reports failure
+  [PASS] start walled in: reports failure
+
+Test 4: alternative paths (top route 8 moves, bottom route 12 moves)
+  A*
+  solution found: yes | path length: 8 | states expanded: 8
+  path (row, col): (1,1) -> (1,2) -> (1,3) -> (1,4) -> (1,5) -> (1,6) -> (1,7) -> (1,8) -> (1,9)
+  actions: Right Right Right Right Right Right Right Right
+  ###########
+  #S*******G#
+  #.#######.#
+  #.........#
+  ###########
+  [PASS] returned path is a shortest path (8 moves)
+
+Test 4b: two different shortest paths (both 10 moves)
+  A*
+  solution found: yes | path length: 10 | states expanded: 11
+  path (row, col): (3,1) -> (2,1) -> (1,1) -> (1,2) -> (1,3) -> (1,4) -> (1,5) -> (1,6) -> (1,7) -> (2,7) -> (3,7)
+  actions: Up Up Right Right Right Right Right Right Down Down
+  #########
+  #*******#
+  #*#####*#
+  #S#...#G#
+  #.#.#.#.#
+  #.......#
+  #########
+  [PASS] returns one of the shortest paths (10 moves)
+
+Extra checks
+  [PASS] gap in the outer wall: never leaves the grid
+  [PASS] A* and BFS agree on the lab map
+  [PASS] A* and BFS agree on all test maps
+
+14/14 checks passed
+
+========================================================================
+TASK 5: BFS vs A* (Manhattan) on the lab map
+========================================================================
+Measure                  BFS        A*
+Solution found          True      True
+Path length               40        40
+States expanded           63        63
+free cells in the warehouse: 64
+same path? True
+
+f = g* + h (Manhattan) per cell; the optimal cost is 40:
+  cells on some shortest path: 41; cells off every shortest path: 23
+  cells with f < 40: 49
+  cells with f = 40: 15 (all on a shortest path: True)
+  off-path cells with f >= 40: 0
+  Manhattan distance S-G = 20, true cost = 40
+BFS path:
+  #################
+  #S****#*********#
+  #.###*#*#######*#
+  #...#*#*******#*#
+  ###.#*#######*#*#
+  #...#*********#*#
+  #.###########.#*#
+  #.............#G#
+  #################
+A* path:
+  #################
+  #S****#*********#
+  #.###*#*#######*#
+  #...#*#*******#*#
+  ###.#*#######*#*#
+  #...#*********#*#
+  #.###########.#*#
+  #.............#G#
+  #################
+
+Supplementary comparison on an open room (134 free cells):
+Measure                  BFS        A*
+Solution found          True      True
+Path length               24        24
+States expanded          131        24
+A* path:
+  ######################
+  #S...................#
+  #*...................#
+  #*..........####.....#
+  #*..........#........#
+  #*..........#........#
+  #*...................#
+  #******************G.#
+  ######################
+
+========================================================================
+TASK 6: HEURISTIC INVESTIGATION (lab map)
+========================================================================
+optimal path length (BFS / independent check) = 40
+
+Heuristic         found  length  expanded  optimal?  max(h-h*)  h>h* cells  inconsistent edges
+Manhattan          True      40        63      True       0.00           0                   0
+h(n) = 0           True      40        63      True       0.00           0                   0
+Euclidean          True      40        63      True       0.00           0                   0
+2 x Manhattan      True      40        67      True      14.00          18                  64
+
+Paths:
+Manhattan: length 40, expanded 63 (63 distinct states)
+  #################
+  #S****#*********#
+  #.###*#*#######*#
+  #...#*#*******#*#
+  ###.#*#######*#*#
+  #...#*********#*#
+  #.###########.#*#
+  #.............#G#
+  #################
+h(n) = 0: length 40, expanded 63 (63 distinct states)
+  #################
+  #S****#*********#
+  #.###*#*#######*#
+  #...#*#*******#*#
+  ###.#*#######*#*#
+  #...#*********#*#
+  #.###########.#*#
+  #.............#G#
+  #################
+Euclidean: length 40, expanded 63 (63 distinct states)
+  #################
+  #S****#*********#
+  #.###*#*#######*#
+  #...#*#*******#*#
+  ###.#*#######*#*#
+  #...#*********#*#
+  #.###########.#*#
+  #.............#G#
+  #################
+2 x Manhattan: length 40, expanded 67 (63 distinct states)
+  #################
+  #S****#*********#
+  #.###*#*#######*#
+  #...#*#*******#*#
+  ###.#*#######*#*#
+  #...#*********#*#
+  #.###########.#*#
+  #.............#G#
+  #################
+
+Scaling Manhattan by k (lab map):
+     k  length  expanded  distinct  optimal?
+     0      40        63        63      True
+   0.5      40        63        63      True
+     1      40        63        63      True
+   1.5      40        65        63      True
+     2      40        67        63      True
+     3      40        77        63      True
+     5      40        83        63      True
+    10      48        57        57     False
+   100      48        57        57     False
+
+Second map, where an overestimating heuristic goes wrong:
+  #########
+  #S.#.#..#
+  #....##.#
+  #.#.....#
+  #....#..#
+  ##..#..G#
+  #########
+optimal length (BFS) = 10; independent check = 10
+Heuristic         found  length  expanded  optimal?  max(h-h*)
+Manhattan          True      10        17      True       0.00
+h(n) = 0           True      10        24      True       0.00
+Euclidean          True      10        17      True       0.00
+2 x Manhattan      True      12        14     False      10.00
+10 x Manhattan     True      12        14     False      90.00
+Path returned by A* with 2 x Manhattan:
+  #########
+  #S.#.#..#
+  #*...##.#
+  #*#.***.#
+  #****#*.#
+  ##..#.*G#
+  #########
+Path returned by A* with Manhattan:
+  #########
+  #S.#.#..#
+  #***.##.#
+  #.#****.#
+  #....#*.#
+  ##..#.*G#
+  #########

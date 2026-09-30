@@ -1,0 +1,204 @@
+Python 3.11.15
+========================================================================
+TASK 0: THE PLANNING PROBLEM
+========================================================================
+I = {At(Package,A), At(Robot,A)}
+G = {At(Package,C)}
+
+Actions (name | positive preconditions | effects):
+  Move(A,B)            | At(Robot,A)                          | not At(Robot,A), At(Robot,B)
+  Move(B,A)            | At(Robot,B)                          | not At(Robot,B), At(Robot,A)
+  Move(B,C)            | At(Robot,B)                          | not At(Robot,B), At(Robot,C)
+  Move(C,B)            | At(Robot,C)                          | not At(Robot,C), At(Robot,B)
+  PickUp(Package,A)    | At(Package,A), At(Robot,A)           | not At(Package,A), Holding(Package)
+  PickUp(Package,B)    | At(Package,B), At(Robot,B)           | not At(Package,B), Holding(Package)
+  PickUp(Package,C)    | At(Package,C), At(Robot,C)           | not At(Package,C), Holding(Package)
+  Drop(Package,A)      | At(Robot,A), Holding(Package)        | not Holding(Package), At(Package,A)
+  Drop(Package,B)      | At(Robot,B), Holding(Package)        | not Holding(Package), At(Package,B)
+  Drop(Package,C)      | At(Robot,C), Holding(Package)        | not Holding(Package), At(Package,C)
+
+Applicable in I?
+  PickUp(Package,A): applicable
+  Drop(Package,C): NOT applicable, unmet: At(Robot,C), Holding(Package)
+  [PASS] PickUp(Package,A) is applicable in I
+  [PASS] Drop(Package,C) is not applicable in I
+
+All actions applicable in I: Move(A,B), PickUp(Package,A)
+
+========================================================================
+TASK 1: THE PLAN CONSTRUCTED BY HAND, CHECKED BY THE VERIFIER
+========================================================================
+hand-constructed plan: PickUp(Package,A), Move(A,B), Move(B,C), Drop(Package,C)
+  step 1: PickUp(Package,A): precondition At(Package,A): true
+  step 1: PickUp(Package,A): precondition At(Robot,A): true
+  step 1: PickUp(Package,A) -> {At(Robot,A), Holding(Package)}
+  step 2: Move(A,B): precondition At(Robot,A): true
+  step 2: Move(A,B) -> {At(Robot,B), Holding(Package)}
+  step 3: Move(B,C): precondition At(Robot,B): true
+  step 3: Move(B,C) -> {At(Robot,C), Holding(Package)}
+  step 4: Drop(Package,C): precondition At(Robot,C): true
+  step 4: Drop(Package,C): precondition Holding(Package): true
+  step 4: Drop(Package,C) -> {At(Package,C), At(Robot,C)}
+  [PASS] the hand-constructed plan is valid and achieves the goal
+  [PASS] the states after every action equal the hand-written table
+
+The example sequence named in the handout: Move(A,B), PickUp(Package,B), Move(B,C), Drop(Package,C)
+  step 1: Move(A,B): precondition At(Robot,A): true
+  step 1: Move(A,B) -> {At(Package,A), At(Robot,B)}
+  step 2: PickUp(Package,B): precondition At(Package,B): FALSE
+  step 2: PickUp(Package,B): precondition At(Robot,B): true
+  step 2: PickUp(Package,B) is NOT applicable in {At(Package,A), At(Robot,B)}
+  -> valid: False; fails at step 2
+  [PASS] the handout's example sequence is NOT a valid plan (the package is at A, not B)
+
+========================================================================
+TASK 3: TESTING THE PLANNER
+========================================================================
+
+Test A: solvable problem (original warehouse)
+  initial state: {At(Package,A), At(Robot,A)}
+  goal: {At(Package,C)}
+  plan found: 4 actions (search expanded 7 states)
+  S0: {At(Package,A), At(Robot,A)}
+  a1 = PickUp(Package,A)
+  S1: {At(Robot,A), Holding(Package)}
+  a2 = Move(A,B)
+  S2: {At(Robot,B), Holding(Package)}
+  a3 = Move(B,C)
+  S3: {At(Robot,C), Holding(Package)}
+  a4 = Drop(Package,C)
+  S4: {At(Package,C), At(Robot,C)}
+  independent verification of every action:
+  step 1: PickUp(Package,A): precondition At(Package,A): true
+  step 1: PickUp(Package,A): precondition At(Robot,A): true
+  step 1: PickUp(Package,A) -> {At(Robot,A), Holding(Package)}
+  step 2: Move(A,B): precondition At(Robot,A): true
+  step 2: Move(A,B) -> {At(Robot,B), Holding(Package)}
+  step 3: Move(B,C): precondition At(Robot,B): true
+  step 3: Move(B,C) -> {At(Robot,C), Holding(Package)}
+  step 4: Drop(Package,C): precondition At(Robot,C): true
+  step 4: Drop(Package,C): precondition Holding(Package): true
+  step 4: Drop(Package,C) -> {At(Package,C), At(Robot,C)}
+  plan actually valid: True
+  [PASS] A: a plan is found
+  [PASS] A: every action's preconditions hold when it is executed, and the goal is reached
+  [PASS] A: the verifier's states equal the planner's states
+  [PASS] A: plan is PickUp(Package,A), Move(A,B), Move(B,C), Drop(Package,C)
+  shortest plan length by exhaustive enumeration of all sequences: 4
+  [PASS] A: BFS plan length equals the exhaustive shortest length (4)
+
+Test B: impossible problem (the PickUp actions are removed)
+  initial state: {At(Package,A), At(Robot,A)}
+  goal: {At(Package,C)}
+  No plan found
+  (search expanded 3 states)
+  plan actually valid: n/a (no plan)
+  [PASS] B: reports 'No plan found' instead of inventing an action
+  [PASS] B: exhaustive enumeration also finds no plan up to length 5
+
+Test C1: an irrelevant action, Wave(Robot), which changes nothing the goal mentions
+  plan found: 4 actions (search expanded 12 states)
+  S0: {At(Package,A), At(Robot,A)}
+  a1 = PickUp(Package,A)
+  S1: {At(Robot,A), Holding(Package)}
+  a2 = Move(A,B)
+  S2: {At(Robot,B), Holding(Package)}
+  a3 = Move(B,C)
+  S3: {At(Robot,C), Holding(Package)}
+  a4 = Drop(Package,C)
+  S4: {At(Package,C), At(Robot,C)}
+  plan actually valid: True
+  [PASS] C1: the same 4-action plan is found and Wave is not used
+
+Test C2: an action that moves the robot but not the package, MoveFast(A,C)
+  plan found: 3 actions (search expanded 7 states)
+  S0: {At(Package,A), At(Robot,A)}
+  a1 = PickUp(Package,A)
+  S1: {At(Robot,A), Holding(Package)}
+  a2 = MoveFast(A,C)
+  S2: {At(Robot,C), Holding(Package)}
+  a3 = Drop(Package,C)
+  S3: {At(Package,C), At(Robot,C)}
+  plan actually valid: True
+  [PASS] C2: the robot reaching C is not treated as the package reaching C (PickUp and Drop are still in the plan)
+  for contrast, goal {At(Robot,C)}: plan = ['MoveFast(A,C)']
+  [PASS] C2: for the goal At(Robot,C) the planner needs only MoveFast(A,C)
+
+Test C3: MoveFast(A,C) available, but PickUp removed
+  No plan found
+  (search expanded 3 states)
+  the robot can reach C here: True
+  [PASS] C3: the robot can reach C but there is still no plan for the package
+
+========================================================================
+EXTRA TESTS (beyond the handout's three)
+========================================================================
+
+Goal already true in I: plan = [], states expanded = 0
+  [PASS] goal already satisfied: empty plan
+
+Package starts at B, robot at A: plan = ['Move(A,B)', 'PickUp(Package,B)', 'Move(B,C)', 'Drop(Package,C)']
+  [PASS] package at B: Move(A,B), PickUp(Package,B), Move(B,C), Drop(Package,C)
+
+Two goal propositions, At(Package,A) and At(Robot,C): plan = ['Move(A,B)', 'Move(B,C)']
+  [PASS] conjunctive goal: both propositions are achieved
+
+Negative precondition: Lock(Door) needs Door NOT locked
+  [PASS] negative precondition satisfied: applicable
+  [PASS] negative precondition violated: not applicable
+  [PASS] negative precondition: plan [Lock(Door)] found
+
+What if the planner did not check preconditions?
+  plan found: 1 actions (search expanded 7 states)
+  S0: {At(Package,A), At(Robot,A)}
+  a1 = Drop(Package,C)
+  S1: {At(Package,A), At(Package,C), At(Robot,A)}
+  step 1: Drop(Package,C): precondition At(Robot,C): FALSE
+  step 1: Drop(Package,C): precondition Holding(Package): FALSE
+  step 1: Drop(Package,C) is NOT applicable in {At(Package,A), At(Robot,A)}
+  -> the 'plan' ['Drop(Package,C)'] looks like a solution, but valid = False (first failure at step 1)
+  [PASS] without the precondition check the planner returns an INVALID 1-action plan, and the verifier rejects it
+
+========================================================================
+TASK 5 (optional): AN EXPLANATION OF THE PLAN VS THE EXECUTED TRANSITIONS
+========================================================================
+The explanation below (what the LLM claimed about each step) is compared with the program's transitions.
+  step 1 PickUp(Package,A): claimed preconditions match the action and hold in S0: True; claimed S1 equals the executed state: True
+  step 2 Move(A,B): claimed preconditions match the action and hold in S1: True; claimed S2 equals the executed state: True
+  step 3 Move(B,C): claimed preconditions match the action and hold in S2: True; claimed S3 equals the executed state: True
+  step 4 Drop(Package,C): claimed preconditions match the action and hold in S3: True; claimed S4 equals the executed state: True
+  [PASS] the explanation matches the independently executed transitions at every step
+
+========================================================================
+TASKS 6-8 (optional): PROLOG, planner.pl
+========================================================================
+SWI-Prolog version 9.0.4 for x86_64-linux; running: swipl -q -g run_tests -t halt planner.pl
+
+[PASS] ?- animal(polly).   true
+[PASS] ?- can_move(a,b).   true
+[PASS] ?- can_move(a,c).   false
+[PASS] ?- findall(A,can_move(a,A),[b]).   true
+[PASS] ?- findall(A,can_move(b,A),[a,c]).   true
+[PASS] ?- valid_move(a,b).   true
+[PASS] ?- valid_move(b,c).   true
+[PASS] ?- valid_move(a,c).   false
+[PASS] ?- valid_path([a,b,c]).   true
+[PASS] ?- valid_path([a,c]).   false
+[PASS] ?- reduce_speed.   true
+[PASS] ?- slippery.   true
+[PASS] ?- wet_road.   true
+[PASS] ?- animal(tweety).   false
+14/14 Prolog checks passed
+  [PASS] planner.pl: all Prolog self-checks pass
+
+Checking the Python planner's moves with the Prolog knowledge base (generate -> verify):
+  plan ['PickUp(Package,A)', 'Move(A,B)', 'Move(B,C)', 'Drop(Package,C)']
+  route [a,b,c]: ?- valid_path([a,b,c]).  True
+  [PASS] Prolog accepts the route of the Python planner's plan
+  proposed Move(a,c): ?- valid_move(a,c).  False
+  [PASS] Prolog rejects a proposed Move(a,c)
+  route [a,c], the route of the Test C2 plan: ?- valid_path([a,c]).  False
+  [PASS] Prolog flags the route of the Test C2 plan (MoveFast is not a connected move)
+
+========================================================================
+28/28 checks passed
